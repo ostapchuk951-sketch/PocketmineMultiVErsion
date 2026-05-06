@@ -1,0 +1,103 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MultiVersion;
+
+use MultiVersion\command\MVCommand;
+use MultiVersion\command\MVVersionsCommand;
+use MultiVersion\listener\PacketListener;
+use pocketmine\plugin\PluginBase;
+use pocketmine\utils\TextFormat;
+
+class Main extends PluginBase {
+
+    private static Main $instance;
+
+    /** @var int[] */
+    private array $allowedProtocols = [];
+
+    /** @var string[] */
+    private array $versionNames = [];
+
+    private int $serverProtocol;
+    private string $serverVersion;
+    private string $kickMessage;
+    private bool $debug;
+
+    public function onEnable(): void {
+        self::$instance = $this;
+
+        $this->saveDefaultConfig();
+        $this->loadConfiguration();
+
+        $this->getServer()->getPluginManager()->registerEvents(
+            new PacketListener($this),
+            $this
+        );
+
+        $this->getServer()->getCommandMap()->register("multiversion", new MVCommand($this));
+        $this->getServer()->getCommandMap()->register("multiversion", new MVVersionsCommand($this));
+
+        $this->getLogger()->info(TextFormat::GREEN . "MultiVersion enabled!");
+        $this->getLogger()->info(TextFormat::AQUA . "Server protocol: " . $this->serverProtocol . " (" . $this->serverVersion . ")");
+        $this->getLogger()->info(TextFormat::AQUA . "Allowed protocols: " . implode(", ", $this->allowedProtocols));
+    }
+
+    public function onDisable(): void {
+        $this->getLogger()->info(TextFormat::RED . "MultiVersion disabled!");
+    }
+
+    private function loadConfiguration(): void {
+        $config = $this->getConfig();
+
+        $this->allowedProtocols = array_map('intval', (array) $config->get("allowed_protocols", [748]));
+        $this->serverProtocol   = (int) $config->get("server_protocol", 748);
+        $this->serverVersion    = (string) $config->get("server_version", "1.21.50");
+        $this->kickMessage      = (string) $config->get("kick_message", "§cYour version is not supported!");
+        $this->debug            = (bool) $config->get("debug", false);
+        $this->versionNames     = (array) $config->get("version_names", []);
+    }
+
+    public static function getInstance(): Main {
+        return self::$instance;
+    }
+
+    /** @return int[] */
+    public function getAllowedProtocols(): array {
+        return $this->allowedProtocols;
+    }
+
+    public function getServerProtocol(): int {
+        return $this->serverProtocol;
+    }
+
+    public function getServerVersion(): string {
+        return $this->serverVersion;
+    }
+
+    public function isDebug(): bool {
+        return $this->debug;
+    }
+
+    public function getVersionName(int $protocol): string {
+        return $this->versionNames[$protocol] ?? "Unknown ($protocol)";
+    }
+
+    public function buildVersionList(): string {
+        $names = [];
+        foreach ($this->allowedProtocols as $protocol) {
+            $names[] = $this->getVersionName($protocol);
+        }
+        return implode(", ", $names);
+    }
+
+    public function getKickMessage(): string {
+        return str_replace("{versions}", $this->buildVersionList(), $this->kickMessage);
+    }
+
+    public function reloadPlugin(): void {
+        $this->reloadConfig();
+        $this->loadConfiguration();
+    }
+}
