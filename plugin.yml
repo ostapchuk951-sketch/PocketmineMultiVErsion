@@ -1,0 +1,22 @@
+name: MultiVersion
+version: 1.0.0
+main: MultiVersion\Main
+api: 5.0.0
+description: "Allows players with different Minecraft versions to connect to the server"
+author: "YourName"
+website: "https://github.com/YourName/MultiVersion"
+ 
+commands:
+  mvreload:
+    description: "Reload MultiVersion config"
+    usage: "/mvreload"
+    permission: multiversion.admin
+  mvversions:
+    description: "Show allowed versions"
+    usage: "/mvversions"
+    permission: multiversion.admin
+ 
+permissions:
+  multiversion.admin:
+    description: "Access to MultiVersion admin commands"
+    default: op
