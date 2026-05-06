@@ -1,0 +1,29 @@
+# MultiVersion Configuration
+# PocketMine-MP 5.36.0 | Minecraft BE Protocol
+ 
+# List of allowed protocol versions
+# Players with these protocols can join the server
+allowed_protocols:
+  - 748  # 1.21.50
+  - 766  # 1.21.60
+  - 800  # 1.22.0 (example future version)
+ 
+# The protocol version that will be "shown" to clients (server's actual protocol)
+# This is what the server advertises in the ping response
+server_protocol: 748
+ 
+# The game version string shown in the server ping / player list tab
+server_version: "1.21.50"
+ 
+# Kick message when version is not allowed
+kick_message: "§cYour Minecraft version is not supported!\n§7Supported versions: {versions}"
+ 
+# Enable debug logging
+debug: false
+ 
+# Optional: version aliases shown in kick message
+version_names:
+  748: "1.21.50"
+  766: "1.21.60"
+  800: "1.22.0"
+ 
