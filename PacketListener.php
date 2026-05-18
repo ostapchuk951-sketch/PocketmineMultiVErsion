@@ -19,12 +19,6 @@ class PacketListener implements Listener {
 
     public function __construct(private Main $plugin) {}
 
-    /**
-     * Intercept Login packet — the key handler.
-     * When client sends LoginPacket, it contains the client's protocol version.
-     * We check if it's in the allowed list, and if the client is "newer" than the server,
-     * we patch the protocol field so PocketMine doesn't kick them.
-     */
     public function onDataPacketReceive(DataPacketReceiveEvent $event): void {
         $packet = $event->getPacket();
 
@@ -43,15 +37,12 @@ class PacketListener implements Listener {
             );
         }
 
-        // If client protocol is not in allowed list → kick
         if (!in_array($protocol, $this->plugin->getAllowedProtocols(), true)) {
             $origin->disconnect($this->plugin->getKickMessage());
             $event->cancel();
             return;
         }
 
-        // If client is on a DIFFERENT (higher or lower) protocol than server —
-        // patch the protocol field to match server so PocketMine accepts the session
         if ($protocol !== $this->plugin->getServerProtocol()) {
             $this->patchProtocol($packet);
 
@@ -63,26 +54,15 @@ class PacketListener implements Listener {
         }
     }
 
-    /**
-     * Intercept outgoing packets to fix version strings sent back to client.
-     * Mainly adjusts StartGamePacket so server version shown in-game is correct.
-     */
     public function onDataPacketSend(DataPacketSendEvent $event): void {
         foreach ($event->getPackets() as $packet) {
             if ($packet instanceof StartGamePacket) {
-                // Ensure the game version string matches what we want to advertise
                 if (isset($packet->levelSettings)) {
-                    // No direct version field in StartGamePacket in modern PMMP,
-                    // but we can adjust experiments/game rules here if needed.
                 }
             }
         }
     }
 
-    /**
-     * Patch the protocol field in a LoginPacket via reflection,
-     * since $packet->protocol is not directly writable after decode.
-     */
     private function patchProtocol(LoginPacket $packet): void {
         try {
             $reflection = new \ReflectionClass($packet);
